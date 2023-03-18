@@ -15,17 +15,24 @@ library(feasts)
 ```
 
 
-# Introduction {.tabset}
+# Introduction {.tabset .tabset-fade}
 
 This task explores Willamette Falls fish ladder passage data, including daily time series data, seasonplots, and annual counts. The data used for this analysis are accessed from the Columbia River Data Access in Real Time (DART) and collected by the Oregon Department of Fish and Wildlife (ODFW). Fish counting occurs at the ladder main viewing window and uses video cameras and time lapsed video to record data 24 hours a day, every day. This analysis specifically examings the passage of adult coho (*Oncorhynchus kisutch*), jack coho, and steelhead (*Oncorhynchus mykiss*) salmon between Jan 1, 2001 and Dec 31, 2010. "Jack" salmon are defined as males that reach sexual maturation and return to spawn in freshwater one year earlier than full-size adult males. These jack coho are identifiable by different coloration (SeaGrant) (https://alaskaseagrant.org/2022/07/research-shows-how-jack-salmon-contribute-to-population-and-genetics/)
 
-**source:** Columbia Basin Research, University of Washington. 2023. DART Adult Passage Graphics & Text. http://www.cbr.washington.edu/dart/query/adult_graph_text
+**Source:** Columbia Basin Research, University of Washington. 2023. DART Adult Passage Graphics & Text. http://www.cbr.washington.edu/dart/query/adult_graph_text
 
-[Map of fish]
+#### Pictures {.tabset .tabset-fade}
 
+##### Fish ladder
+
+##### Coho Salmon
 ![Adult coho salmon. Credit: *NOAA Fisheries*](coho-salmon.jpg)
 
+
+##### Steelhead Salmon
 ![Male and female steelhead salmon. Credit: *NOAA Fisheries*](steelhead.jpg)
+
+
 
 
 ## Original time series
@@ -74,7 +81,7 @@ ggplot(data = fish_ts_long, aes(x = date, y = count, color = species)) +
   scale_x_date(limits = as.Date(c('2001-01-01', '2010-12-31')),
                date_breaks = "1 year",
                date_labels = "%Y") +
-  scale_color_manual(values = c("salmon3", "lightsalmon", "palevioletred3")) +
+  scale_color_manual(values = c("lightsalmon", "pink1", "salmon3")) +
   theme_bw() +
   theme(
     axis.title = element_text(face = 'bold'),
@@ -127,5 +134,46 @@ fish_ts_long %>%
 
 ## Annual counts
 
+```{r}
+### create new df with annual totals by spp
+fish_count_yr <- as.data.frame(fish_ts_long) %>% 
+  mutate(year = lubridate::year(date)) %>% 
+  select(-date) %>% 
+  group_by(year, species) %>% 
+  summarize(yr_count = sum(count))
+
+### some sample stats
+fish_stats_yr <- fish_count_yr %>% 
+  group_by(species) %>% 
+  summarize(mean = mean(yr_count),
+            sd = sd(yr_count))
+
+
+### Visualize annual counts
+ggplot(data = fish_count_yr, aes(x = year, y = yr_count)) +
+  geom_col(aes(fill = species), 
+           color = "palevioletred4") +
+  scale_fill_manual(values = c("lightsalmon", "pink1", "salmon3"),
+                     labels = c("Coho", "Jack Coho", "Steelhead")) +
+  scale_x_continuous(breaks = seq(from = 2001, to = 2010, by = 1),
+                     expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x = element_blank(),
+       y = "Annual Counts") +
+  theme_minimal() +
+  theme(
+    axis.title.y = element_text(face = 'bold', vjust = 3),
+    axis.text.x = element_text(face = 'bold', size = 10),
+    axis.text.y = element_text(size = 8),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.major.x = element_blank(),
+    legend.title = element_blank()
+  )
+```
+ 
+ **Figure 3:** Annual counts of coho, jack coho, and steelhead salmon passing at the Willamette Falls fish ladder between 2001-2010. On average, steelhead salmon had an annual count of `r round(fish_stats_yr$mean[3],0)` <font size="1">$\pm$</font> `r round(fish_stats_yr$sd[3],0)` while coho and jack coho had average annual counts of `r round(fish_stats_yr$mean[1],0)`<font size="1">$\pm$</font>`r round(fish_stats_yr$sd[1],0)` and `r round(fish_stats_yr$mean[2],0)`<font size="1">$\pm$</font>`r round(fish_stats_yr$sd[2],0)`, respectively (mean <font size="1">$\pm$</font>1 standard deviation).
+
+*   With the exception of 2009, steelhead salmon consistently have the highest counts during this time period.
+*   Overall salmon counts dropped between 2005-2008. In 2009-2010, Coho salmon counts grew much quicker than steelhead.  
 
 
