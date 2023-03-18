@@ -1,0 +1,53 @@
+---
+title: 'Task 2: Willamette Falls fish'
+author: "Nick McManus"
+date: "2023-03-18"
+output: html_document
+---
+
+```{r setup, include=TRUE, message = FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(lubridate)
+library(tsibble)
+library(fable)
+library(feasts)
+```
+
+
+# Introduction {.tabset}
+
+This task explores Willamette Falls fish ladder passage data, including daily time series data, seasonplots, and annual counts. The data used for this analysis are accessed from the Columbia River Data Access in Real Time (DART) and collected by the Oregon Department of Fish and Wildlife (ODFW). Fish counting occurs at the ladder main viewing window and uses video cameras and time lapsed video to record data 24 hours a day, every day. This analysis specifically examings the passage of adult coho (*Oncorhynchus kisutch*), jack coho, and steelhead (*Oncorhynchus mykiss*) salmon between Jan 1, 2001 and Dec 31, 2010. "Jack" salmon are defined as males that reach sexual maturation and return to spawn in freshwater one year earlier than full-size adult males. These jack coho are identifiable by different coloration (SeaGrant) (https://alaskaseagrant.org/2022/07/research-shows-how-jack-salmon-contribute-to-population-and-genetics/)
+
+[Map of fish]
+
+[pics of the fish?]
+
+**source:** Columbia Basin Research, University of Washington. 2023. DART Adult Passage Graphics & Text. http://www.cbr.washington.edu/dart/query/adult_graph_text
+
+
+## Original time series
+
+```{r}
+### read in data
+fish <- read_csv('willamette_fish_passage.csv')
+
+### clean and wrangle data
+fish_sub <- fish %>% 
+  janitor::clean_names() %>% 
+  ## return 3 fish types of interest
+  select(project, date, steelhead, coho, jack_coho) %>% 
+  ## replace NAs with 0
+  replace(is.na(.), 0)
+  
+```
+
+
+## Seasonplots
+
+
+
+## Annual counts
+
+
+
