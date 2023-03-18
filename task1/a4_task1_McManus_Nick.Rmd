@@ -1,0 +1,91 @@
+---
+title: 'Task 1: Spatial Visualization'
+author: "Nick McManus"
+date: "2023-03-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(terra)
+library(sf)
+library(tmap)
+library(calecopal)
+```
+
+# Introduction:
+
+Test about this assignment
+
+**Source:**
+
+# Read in and wrangle data:
+```{r}
+### read in CA counties
+ca_counties_sf <- read_sf(here('task1/ca_counties/CA_Counties_TIGER2016.shp')) %>% 
+  janitor::clean_names() %>% 
+  ## only keep name and geom
+  select(name)
+
+### read in the oil data
+oil_spill <- read_csv(here('task1/Oil_Spill_Incident_Tracking_[ds394].csv')) %>% 
+  janitor::clean_names()
+
+
+### change oil spill data to sf so we can plot points
+oil_spill_sf <- st_as_sf(oil_spill, coords = c('x','y'),
+                         ## set CRS to counties
+                         crs = st_crs(ca_counties_sf))
+
+### double-check CRS matches
+# st_crs(ca_counties_sf) == st_crs(oil_spill_sf)
+# [1] TRUE
+```
+
+# Visualize oil spill data
+
+## Interactive tmap
+```{r}
+### change oil spill data to sf
+oil_spill_sf <- st_as_sf(oil_spill, coords = c('x','y'),
+                         ## set CRS to counties
+                         crs = st_crs(ca_counties_sf))
+
+### double-check CRS matches
+# st_crs(ca_counties_sf) == st_crs(oil_spill_sf)
+# [1] TRUE
+
+### plot oil spill events in CA counties
+tmap_mode('view')
+tm_shape(ca_counties_sf) +
+  tm_borders(lwd = 1, col = 'gray40') +
+tm_shape(oil_spill_sf) +
+  tm_dots(col = 'darkorchid4', alpha = 0.5) 
+```
+**Figure 1:** Location and details of oil spill events by clicking on point.
+
+
+## Choropleth map
+```{r}
+### return only inland oil spills
+oil_spill_land <- oil_spill_sf %>% 
+  filter(inlandmari == 'Inland')
+
+### join inland oil data with counties
+oil_count_counties_sf <- ca_counties_sf %>% 
+  st_join(oil_spill_land) %>% 
+  ## summarize number of spills per county
+  group_by(name) %>% 
+  summarize(spill_events = n())
+
+### create choropleth with color based on count
+ggplot(data = oil_count_counties_sf) +
+  geom_sf(aes(fill = spill_events), size = 0.1) +
+  scale_fill_gradientn(colors = c('gray99', 'orchid1', 'darkorchid4')) +
+  labs(fill = "Number of oil spills") +
+  theme_void()
+```
+**Figure 2:** California oil spill events in 2008. 
