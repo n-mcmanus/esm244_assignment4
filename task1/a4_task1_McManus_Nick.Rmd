@@ -1,29 +1,42 @@
 ---
-title: 'Task 1: Spatial Visualization'
+title: 'Task 1: CA Oil Spills'
 author: "Nick McManus"
 date: "2023-03-10"
-output: html_document
+output: 
+ html_document: 
+    toc: yes
+    toc_float: yes
+    theme: flatly
+    code_folding: hide
+    smooth_scroll: yes
+    collapsed: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=TRUE, warning = FALSE, message = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 library(tidyverse)
 library(here)
 library(terra)
 library(sf)
 library(tmap)
-library(calecopal)
 ```
 
-# Introduction:
+# Overview:
+***
 
-Test about this assignment
+In this task, we visually explore the location of 2008 oil spill incidents throughout the state of California. First, an interactive map with locations of every 2008 oil spill is generated for the user to explore individual incidents. Next, a choropleth map is created to visualize which CA counties had the highest number of inland oil spill incidents. Data used in this analysis comes from the Office of Spill Prevention and Response (OSPR) online database. An "incident" is defined by the OSPR as "a discharge or threatened discharge of petroleum or other deleterious material into the waters of the state." 
 
 **Source:**
+Lampinen, Mark (2020). Oil Spill Incident Tracking [ds394]. California Department of Fish and Game, Office of Spill Prevention and Response. https://gis.data.ca.gov/datasets/CDFW::oil-spill-incident-tracking-ds394-1/about
 
-# Read in and wrangle data:
+![A floating barrier known as booms is set up to try to stop further incursion into the Wetlands Talbert Marsh after an oil spill in Huntington Beach, CA, October 2021. Credit: *Ringo H.W. Chiu/AP*](spill.jpeg)
+
+<br>
+
 ```{r}
+### Read in and wrangle data!
+
 ### read in CA counties
 ca_counties_sf <- read_sf(here('task1/ca_counties/CA_Counties_TIGER2016.shp')) %>% 
   janitor::clean_names() %>% 
@@ -45,7 +58,8 @@ oil_spill_sf <- st_as_sf(oil_spill, coords = c('x','y'),
 # [1] TRUE
 ```
 
-# Visualize oil spill data
+# Oil spill maps: {.tabset .tabset-fade}
+***
 
 ## Interactive tmap
 ```{r}
@@ -65,7 +79,8 @@ tm_shape(ca_counties_sf) +
 tm_shape(oil_spill_sf) +
   tm_dots(col = 'darkorchid4', alpha = 0.5) 
 ```
-**Figure 1:** Location and details of oil spill events by clicking on point.
+
+**Figure 1:** Location of all reported 2008 oil spill incidents within the state of California. More information on each event can be obtained by clicking on the point.
 
 
 ## Choropleth map
@@ -83,9 +98,10 @@ oil_count_counties_sf <- ca_counties_sf %>%
 
 ### create choropleth with color based on count
 ggplot(data = oil_count_counties_sf) +
-  geom_sf(aes(fill = spill_events), size = 0.1) +
+  geom_sf(aes(fill = spill_events)) +
   scale_fill_gradientn(colors = c('gray99', 'orchid1', 'darkorchid4')) +
-  labs(fill = "Number of oil spills") +
+  labs(fill = "Number of incidents") +
   theme_void()
 ```
-**Figure 2:** California oil spill events in 2008. 
+
+**Figure 2:** Inland 2008 California oil spill events by county. Darker purple color indicates a greater number of spill incidents within that county.
