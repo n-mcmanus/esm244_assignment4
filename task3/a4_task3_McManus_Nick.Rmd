@@ -24,25 +24,21 @@ library(cowplot)
 
 
 
-# Introduction: {.tabset .tabset-pills}
+## Introduction: {.tabset .tabset-pills}
 ***
 
 In this task, the inaugural addresses from President Biden (2021) and former President Trump (2017) are analysed and directly compared. First, the most frequently used words in both speeches will be determined and visualized in a word cloud. Next, a sentiment analysis will elucidate any major tonal differences between the two speeches. The full text for Biden and Trump's inaugural addresses were sourced from the White House and Politico, respectively.   
 
 
-## Biden
+### Biden
 ![U.S. President Joe Biden speaks during his on the West Front of the U.S. Capitol on January 20, 2021 in Washing, DC. *Credit: Pool/Getty Images*](biden.jpg)
 
-## Trump
+### Trump
 ![President Donald Trump pumps his fist after addressing the crowd during his swearing-in ceremony on January 20 at the Capitol in Washing, DC. *Credit: Getty Image*](trump.jpeg)
 
 
-**Sources:** 
-*   The United States Government. (2021, January 21). **Inaugural address by president Joseph R. Biden, Jr.** The White House. Retrieved March 18, 2023, from https://www.whitehouse.gov/briefing-room/speeches-remarks/2021/01/20/inaugural-address-by-president-joseph-r-biden-jr/ 
-*   **Full text: 2017 Donald Trump inauguration speech transcript.** POLITICO. (2017, January 20). Retrieved March 18, 2023, from https://www.politico.com/story/2017/01/full-text-donald-trump-inauguration-speech-transcript-233907 
 
-
-# Read in and wrangle data
+## Read in and wrangle data
 
 ```{r}
 ### read in data using `readtext
@@ -93,7 +89,7 @@ trump_top_30 <- trump_wordcount %>%
 biden_cloud <- ggplot(data = biden_top_30, aes(label = word)) +
   geom_text_wordcloud(aes(color = n, size = n), shape = 'circle') +
   scale_size_area(max_size = 10) +
-  scale_color_gradientn(colors = c("orchid1", "darkorchid4")) +
+  scale_color_gradientn(colors = c("lightblue", "dodgerblue4")) +
   theme_minimal()
 
 trump_cloud <- ggplot(data = trump_top_30, aes(label = word)) +
@@ -108,7 +104,8 @@ plot_grid(biden_cloud, trump_cloud,
           labels = c('Biden:', 'Trump:'))
 ```
 
-**Figure 1:** The top 30 most frequently used words in the past two inaugural addresses, where increased frequency is indicated by text size and color. The top word cloud in purple displays the most common words in Biden's address, while the bottom displays Trump's most commonly used words in red.
+**Figure 1:** The top 30 most frequently used words in the past two inaugural addresses, where increased frequency is indicated by text size and color. The top word cloud in blue displays the most common words in Biden's address, while the bottom displays Trump's most commonly used words in red.
+
 
 ## Sentiment analysis
 
@@ -126,20 +123,59 @@ trump_nrc <- trump_words_clean %>%
 
 ### count how many words for each sentiment
 biden_nrc_counts <- biden_nrc %>% 
-  count(sentiment)
+  count(sentiment) %>% 
+  mutate(pct_total = (n/sum(n))*100,
+         president = 'Biden')
+
 
 trump_nrc_counts <- trump_nrc %>% 
-  count(sentiment)
+  count(sentiment) %>% 
+  mutate(pct_total = (n/sum(n))*100,
+         president = 'Trump')
 
+
+### combine counts into one df for plotting
+nrc_counts <- biden_nrc_counts %>% 
+  rbind(trump_nrc_counts) %>% 
+   ## turn sentiments into vector for graph
+  mutate(sentiment = factor(sentiment, 
+                            levels = c('positive', 'trust', 
+                                       'joy', 'surprise', 'anticipation', 
+                                       'negative', 'fear', 
+                                       'anger', 'sadness', 'disgust')))
 
 ### visualize
-ggplot(data = biden_nrc_counts, 
-       aes(x = n, y = reorder(sentiment, n))) +
-  geom_col()
+ggplot(data = nrc_counts, aes(x = pct_total, y = sentiment)) +
+  geom_col(aes(fill = president), 
+           position = 'dodge',
+           alpha = 0.7,
+           width = 0.9,
+           color = 'gray30') +
+  scale_x_continuous(expand = c(0,0)) +
+  scale_fill_manual(values = c('dodgerblue3', 'firebrick3')) +
+  labs(y = "Sentiment",
+       x = "Proprtion of words used") +
+  theme_minimal() +
+  theme(
+    axis.title.y = element_text(face = 'bold', vjust = 3, size = 12),
+    axis.title.x = element_text(face = 'bold', vjust = -0.6, size = 12),
+    axis.text.y = element_text(face = 'bold.italic', size = 9),
+    legend.title = element_blank(),
+    legend.position = c(.9,.9),
+    legend.text = element_text(size = 10),
+    legend.box.background = element_rect(color = 'black'),
+    legend.background = element_rect(fill = 'honeydew')
+  )
 
-ggplot(data = trump_nrc_counts, 
-       aes(x = n, y = reorder(sentiment, n))) +
-  geom_col()
 
 ```
 
+**Figure 2:** Comparative sentiment analysis using NRC lexicon for the inaugural addresses of Biden (blue) and Trump (red). The y-axis displays the 10 sentiments within the NRC lexicon, while the x-axis represents the relative proportion of words used with a particular sentiment. Proportions rather than raw word counts were used as the length of these addresses differed substantially. Biden's address contains `r sum(biden_nrc_counts$n)` words with associated sentiments, while Trump's address only contained `r sum(trump_nrc_counts$n)` words with associated sentiments. 
+
+
+## Sources:
+
+**Sources:** 
+*   The United States Government. (2021, January 21). **Inaugural address by president Joseph R. Biden, Jr.** The White House. Retrieved March 18, 2023, from https://www.whitehouse.gov/briefing-room/speeches-remarks/2021/01/20/inaugural-address-by-president-joseph-r-biden-jr/ 
+*   **Full text: 2017 Donald Trump inauguration speech transcript.** POLITICO. (2017, January 20). Retrieved March 18, 2023, from https://www.politico.com/story/2017/01/full-text-donald-trump-inauguration-speech-transcript-233907
+*   Crowdsourcing a Word-Emotion Association Lexicon, Saif Mohammad and Peter Turney, **Computational Intelligence**, 29 (3), 436-465, 2013.
