@@ -15,15 +15,26 @@ output:
 ```{r setup, include=TRUE, message = FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(tidyverse)
-
+library(readtext)
+library(tidytext)
+library(textdata)
+library(ggwordcloud)
+library(cowplot)
 ```
 
 
 
-# Introduction:
+# Introduction: {.tabset .tabset-pills}
 ***
 
 In this task, the inaugural addresses from President Biden (2021) and former President Trump (2017) are analysed and directly compared. First, the most frequently used words in both speeches will be determined and visualized in a word cloud. Next, a sentiment analysis will elucidate any major tonal differences between the two speeches. The full text for Biden and Trump's inaugural addresses were sourced from the White House and Politico, respectively.   
+
+
+## Biden
+![U.S. President Joe Biden speaks during his on the West Front of the U.S. Capitol on January 20, 2021 in Washing, DC. *Credit: Pool/Getty Images*](biden.jpg)
+
+## Trump
+![President Donald Trump pumps his fist after addressing the crowd during his swearing-in ceremony on January 20 at the Capitol in Washing, DC. *Credit: Getty Image*](trump.jpeg)
 
 
 **Sources:** 
@@ -31,5 +42,104 @@ In this task, the inaugural addresses from President Biden (2021) and former Pre
 *   **Full text: 2017 Donald Trump inauguration speech transcript.** POLITICO. (2017, January 20). Retrieved March 18, 2023, from https://www.politico.com/story/2017/01/full-text-donald-trump-inauguration-speech-transcript-233907 
 
 
-# Word cloud...
+# Read in and wrangle data
+
+```{r}
+### read in data using `readtext
+biden <- readtext("Biden_inaugural_address.txt")
+trump <- readtext("Trump_inaugural_address.txt")
+
+### wrangle into dataframe and tokenize
+biden_words <- data.frame(biden) %>% 
+  ## life-saver that splits up words for you!
+  unnest_tokens(word, text, token = 'words') %>%
+  ## remove other columns
+  select(word)
+  
+trump_words <- data.frame(trump) %>% 
+  unnest_tokens(word, text, token = 'words') %>% 
+  select(word)
+
+
+### remove stop words
+biden_words_clean <- biden_words %>% 
+  anti_join(stop_words, by = 'word')
+
+trump_words_clean <- trump_words %>% 
+  anti_join(stop_words, by = 'word')
+```
+
+
+## Most Common Words
+
+```{r}
+### count total number of non stop-words 
+biden_wordcount <- biden_words_clean %>% 
+  count(word)
+
+trump_wordcount <- trump_words_clean %>% 
+  count(word)
+
+### find top 30 words for both
+biden_top_30 <- biden_wordcount %>% 
+  slice_max(order_by = n, n = 30)
+  ### returns 12 because of tied counts!
+
+trump_top_30 <- trump_wordcount %>% 
+  slice_max(order_by = n, n = 30)
+
+
+### visualize
+biden_cloud <- ggplot(data = biden_top_30, aes(label = word)) +
+  geom_text_wordcloud(aes(color = n, size = n), shape = 'circle') +
+  scale_size_area(max_size = 10) +
+  scale_color_gradientn(colors = c("orchid1", "darkorchid4")) +
+  theme_minimal()
+
+trump_cloud <- ggplot(data = trump_top_30, aes(label = word)) +
+  geom_text_wordcloud(aes(color = n, size = n), shape = 'circle') +
+  scale_size_area(max_size = 10) +
+  scale_color_gradientn(colors = c("lightpink2", "firebrick4")) +
+  theme_minimal()
+
+plot_grid(biden_cloud, trump_cloud,
+          align = 'v',
+          ncol = 1,
+          labels = c('Biden:', 'Trump:'))
+```
+
+**Figure 1:** The top 30 most frequently used words in the past two inaugural addresses, where increased frequency is indicated by text size and color. The top word cloud in purple displays the most common words in Biden's address, while the bottom displays Trump's most commonly used words in red.
+
+## Sentiment analysis
+
+```{r}
+### load in NRC lexicon
+nrc_lex <- get_sentiments(lexicon = "nrc")
+
+
+### join words to associated sentiment
+biden_nrc <- biden_words_clean %>% 
+  inner_join(nrc_lex, by = 'word')
+
+trump_nrc <- trump_words_clean %>% 
+  inner_join(nrc_lex, by = 'word')
+
+### count how many words for each sentiment
+biden_nrc_counts <- biden_nrc %>% 
+  count(sentiment)
+
+trump_nrc_counts <- trump_nrc %>% 
+  count(sentiment)
+
+
+### visualize
+ggplot(data = biden_nrc_counts, 
+       aes(x = n, y = reorder(sentiment, n))) +
+  geom_col()
+
+ggplot(data = trump_nrc_counts, 
+       aes(x = n, y = reorder(sentiment, n))) +
+  geom_col()
+
+```
 
