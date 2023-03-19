@@ -1,0 +1,35 @@
+---
+title: 'Task 3: Text wrangling and analysis'
+author: "Nick McManus"
+date: "2023-03-19"
+output: 
+ html_document: 
+    toc: yes
+    toc_float: yes
+    theme: flatly
+    code_folding: hide
+    smooth_scroll: yes
+    collapsed: yes
+---
+
+```{r setup, include=TRUE, message = FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(tidyverse)
+
+```
+
+
+
+# Introduction:
+***
+
+In this task, the inaugural addresses from President Biden (2021) and former President Trump (2017) are analysed and directly compared. First, the most frequently used words in both speeches will be determined and visualized in a word cloud. Next, a sentiment analysis will elucidate any major tonal differences between the two speeches. The full text for Biden and Trump's inaugural addresses were sourced from the White House and Politico, respectively.   
+
+
+**Sources:** 
+*   The United States Government. (2021, January 21). **Inaugural address by president Joseph R. Biden, Jr.** The White House. Retrieved March 18, 2023, from https://www.whitehouse.gov/briefing-room/speeches-remarks/2021/01/20/inaugural-address-by-president-joseph-r-biden-jr/ 
+*   **Full text: 2017 Donald Trump inauguration speech transcript.** POLITICO. (2017, January 20). Retrieved March 18, 2023, from https://www.politico.com/story/2017/01/full-text-donald-trump-inauguration-speech-transcript-233907 
+
+
+# Word cloud...
+
