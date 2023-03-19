@@ -29,17 +29,20 @@ library(cowplot)
 
 In this task, the inaugural addresses from President Biden (2021) and former President Trump (2017) are analysed and directly compared. First, the most frequently used words in both speeches will be determined and visualized in a word cloud. Next, a sentiment analysis will elucidate any major tonal differences between the two speeches. The full text for Biden and Trump's inaugural addresses were sourced from the White House and Politico, respectively.   
 
-
 ### Biden
 ![U.S. President Joe Biden speaks during his on the West Front of the U.S. Capitol on January 20, 2021 in Washing, DC. *Credit: Pool/Getty Images*](biden.jpg)
+
+<br>
 
 ### Trump
 ![President Donald Trump pumps his fist after addressing the crowd during his swearing-in ceremony on January 20 at the Capitol in Washing, DC. *Credit: Getty Image*](trump.jpeg)
 
+<br>
 
+## Read in and wrangle data:
+***
 
-## Read in and wrangle data
-
+First we'll read in the txt files of each address, tokenize them, and remove any "stop words" such as "and, a, of" etc. This data subset will then be used for futher analysis.
 ```{r}
 ### read in data using `readtext
 biden <- readtext("Biden_inaugural_address.txt")
@@ -65,8 +68,12 @@ trump_words_clean <- trump_words %>%
   anti_join(stop_words, by = 'word')
 ```
 
+<br>
 
-## Most Common Words
+## Most common words:
+***
+
+Here, we determine the most commonly used words in both presidential addresses. 
 
 ```{r}
 ### count total number of non stop-words 
@@ -76,38 +83,45 @@ biden_wordcount <- biden_words_clean %>%
 trump_wordcount <- trump_words_clean %>% 
   count(word)
 
-### find top 30 words for both
-biden_top_30 <- biden_wordcount %>% 
-  slice_max(order_by = n, n = 30)
-  ### returns 12 because of tied counts!
+### find top 50 of words used for both
+### returns more bc of tied counts!
+biden_top_50 <- biden_wordcount %>% 
+  slice_max(order_by = n, n = 50)
 
-trump_top_30 <- trump_wordcount %>% 
-  slice_max(order_by = n, n = 30)
+trump_top_50 <- trump_wordcount %>% 
+  slice_max(order_by = n, n = 50)
 
 
 ### visualize
-biden_cloud <- ggplot(data = biden_top_30, aes(label = word)) +
+biden_cloud <- ggplot(data = biden_top_50, aes(label = word)) +
   geom_text_wordcloud(aes(color = n, size = n), shape = 'circle') +
-  scale_size_area(max_size = 10) +
-  scale_color_gradientn(colors = c("lightblue", "dodgerblue4")) +
+  scale_size_area(max_size = 11) +
+  scale_color_gradientn(colors = c("lightblue", "dodgerblue1", "dodgerblue4")) +
   theme_minimal()
 
-trump_cloud <- ggplot(data = trump_top_30, aes(label = word)) +
+trump_cloud <- ggplot(data = trump_top_50, aes(label = word)) +
   geom_text_wordcloud(aes(color = n, size = n), shape = 'circle') +
-  scale_size_area(max_size = 10) +
-  scale_color_gradientn(colors = c("lightpink2", "firebrick4")) +
+  scale_size_area(max_size = 11) +
+  scale_color_gradientn(colors = c("lightpink2", 'firebrick1', "firebrick4")) +
   theme_minimal()
 
+### combine into one plot
 plot_grid(biden_cloud, trump_cloud,
           align = 'v',
           ncol = 1,
           labels = c('Biden:', 'Trump:'))
 ```
 
-**Figure 1:** The top 30 most frequently used words in the past two inaugural addresses, where increased frequency is indicated by text size and color. The top word cloud in blue displays the most common words in Biden's address, while the bottom displays Trump's most commonly used words in red.
+**Figure 1:** The 50 most frequently used words in the past two inaugural addresses, where increased frequency is indicated by text size and color. The top word cloud in blue displays the most common words in Biden's address, while the bottom displays Trump's most commonly used words in red.
 
+As displayed in Figure 1, both inaugural addresses used "america" or "american" the most frequently. Commonly used words in each speech also indicate the context for which they took place, such as "violence" and "virus" appearing multiple times in Biden's inauguration. 
 
-## Sentiment analysis
+<br>
+
+## Sentiment analysis:
+***
+
+Finally, a sentiment analysis using the NRC lexicon can help compare the overall tone of each presidential address. This lexicon associates particular English words with eight basic emotions as well as two sentiments (negative and positive). Not all words used in the inaugural addresses may have an associated value in the lexicon.
 
 ```{r}
 ### load in NRC lexicon
@@ -172,10 +186,12 @@ ggplot(data = nrc_counts, aes(x = pct_total, y = sentiment)) +
 
 **Figure 2:** Comparative sentiment analysis using NRC lexicon for the inaugural addresses of Biden (blue) and Trump (red). The y-axis displays the 10 sentiments within the NRC lexicon, while the x-axis represents the relative proportion of words used with a particular sentiment. Proportions rather than raw word counts were used as the length of these addresses differed substantially. Biden's address contains `r sum(biden_nrc_counts$n)` words with associated sentiments, while Trump's address only contained `r sum(trump_nrc_counts$n)` words with associated sentiments. 
 
+As displayed in Figure 2, Trump's inaugural address contained a proportionally higher amount of positive sentiment and lower amount of negative sentiment. Additionally, words associated with negative emotions such as sadness, anger, and fear were used more commonly by Biden; words associated with positive emotions, such as joy and trust, were more commonly used in Trump's address.
+
+<br>
 
 ## Sources:
-
-**Sources:** 
-*   The United States Government. (2021, January 21). **Inaugural address by president Joseph R. Biden, Jr.** The White House. Retrieved March 18, 2023, from https://www.whitehouse.gov/briefing-room/speeches-remarks/2021/01/20/inaugural-address-by-president-joseph-r-biden-jr/ 
-*   **Full text: 2017 Donald Trump inauguration speech transcript.** POLITICO. (2017, January 20). Retrieved March 18, 2023, from https://www.politico.com/story/2017/01/full-text-donald-trump-inauguration-speech-transcript-233907
-*   Crowdsourcing a Word-Emotion Association Lexicon, Saif Mohammad and Peter Turney, **Computational Intelligence**, 29 (3), 436-465, 2013.
+***
+*   The United States Government. (2021, January 21). *Inaugural address by president Joseph R. Biden, Jr.* The White House. Retrieved March 18, 2023, from https://www.whitehouse.gov/briefing-room/speeches-remarks/2021/01/20/inaugural-address-by-president-joseph-r-biden-jr/ 
+*   *Full text: 2017 Donald Trump inauguration speech transcript.* POLITICO. (2017, January 20). Retrieved March 18, 2023, from https://www.politico.com/story/2017/01/full-text-donald-trump-inauguration-speech-transcript-233907
+*   Crowdsourcing a Word-Emotion Association Lexicon, Saif Mohammad and Peter Turney, *Computational Intelligence*, 29 (3), 436-465, 2013.
